@@ -11,7 +11,8 @@ import {
   ChatBubbleBottomCenterTextIcon,
   MoonIcon,
   SunIcon,
-  ArrowDownTrayIcon
+  ArrowDownTrayIcon,
+  DevicePhoneMobileIcon
 } from '@heroicons/react/24/solid';
 
 const App: React.FC = () => {
@@ -22,6 +23,9 @@ const App: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
+  
+  // PWA Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   
   // Dark Mode State with initialization from localStorage
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -42,6 +46,32 @@ const App: React.FC = () => {
   const audioBufferRef = useRef<AudioBuffer | null>(null);
   const startTimeRef = useRef<number>(0);
   const pausedAtRef = useRef<number>(0);
+
+  // Capture PWA install prompt
+  useEffect(() => {
+    const handler = (e: any) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    // Show the install prompt
+    deferredPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    const { outcome } = await deferredPrompt.userChoice;
+    // We've used the prompt, and can't use it again, throw it away
+    setDeferredPrompt(null);
+  };
 
   // Apply dark mode class
   useEffect(() => {
@@ -194,14 +224,28 @@ const App: React.FC = () => {
       {/* Header */}
       <div className="relative max-w-3xl w-full text-center mb-10">
         
-        {/* Dark Mode Toggle */}
-        <button 
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          className="absolute right-0 top-0 p-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
-          title={isDarkMode ? "Светлая тема" : "Тёмная тема"}
-        >
-          {isDarkMode ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
-        </button>
+        {/* Top Right Controls */}
+        <div className="absolute right-0 top-0 flex items-center gap-2">
+           {/* PWA Install Button */}
+           {deferredPrompt && (
+            <button 
+              onClick={handleInstallClick}
+              className="p-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 transition-all animate-bounce"
+              title="Установить приложение"
+            >
+              <DevicePhoneMobileIcon className="h-6 w-6" />
+            </button>
+          )}
+
+          {/* Dark Mode Toggle */}
+          <button 
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className="p-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+            title={isDarkMode ? "Светлая тема" : "Тёмная тема"}
+          >
+            {isDarkMode ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
+          </button>
+        </div>
 
         <div className="inline-flex items-center justify-center p-3 bg-indigo-600 rounded-full shadow-lg mb-4">
             <SpeakerWaveIcon className="h-8 w-8 text-white" />
