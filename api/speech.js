@@ -2,39 +2,43 @@
 import { GoogleGenAI } from "@google/genai";
 
 export const config = {
-  runtime: 'edge', // Используем Edge Runtime для скорости
+  maxDuration: 60, // Увеличиваем время на обработку до 60 секунд
 };
 
-export default async function handler(req) {
-  // Разрешаем CORS, чтобы фронтенд мог обращаться к функции
+// Используем стандартный Node.js обработчик (req, res)
+export default async function handler(req, res) {
+  // Настройка CORS (чтобы браузер не ругался)
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  // Если это предварительный запрос (OPTIONS) - просто отвечаем ОК
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
+    res.status(200).end();
+    return;
   }
 
+  // Разрешаем только POST запросы
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { text, voice } = await req.json();
+    // В Node.js (Vercel) req.body уже распарсен, если заголовок application/json
+    const { text, voice } = req.body;
 
     if (!process.env.API_KEY) {
-      return new Response(JSON.stringify({ error: 'Server API Key not configured' }), { status: 500 });
+      console.error("Сервер: API Key не найден!");
+      return res.status(500).json({ error: 'Server API Key not configured' });
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    // Промпт для сервера (дублируем логику, чтобы она выполнялась на бэкенде)
+    // Промпт для генерации
     const prompt = `Say the following text in Russian. Use a very funny, expressive, and energetic tone.\n\nText to speak: ${text}`;
 
     const response = await ai.models.generateContent({
@@ -57,22 +61,11 @@ export default async function handler(req) {
       throw new Error("No audio returned from Gemini");
     }
 
-    return new Response(JSON.stringify({ base64Audio: audioPart.inlineData.data }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    // Возвращаем аудио клиенту
+    return res.status(200).json({ base64Audio: audioPart.inlineData.data });
 
   } catch (error) {
     console.error('API Route Error:', error);
-    return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    return res.status(500).json({ error: error.message || 'Internal Server Error' });
   }
 }
