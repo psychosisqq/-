@@ -4,6 +4,7 @@ import { generateSpeech } from './services/geminiService';
 import { VoiceName, VOICE_OPTIONS } from './types';
 import { decodeAudioData, createWavBlob } from './utils/audio';
 import AudioVisualizer from './components/AudioVisualizer';
+import { playClickSound, playSuccessSound, playDownloadSound, playDeleteSound } from './utils/soundEffects';
 import { 
   PlayIcon, 
   PauseIcon, 
@@ -77,6 +78,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleInstallClick = async () => {
+    playClickSound();
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     await deferredPrompt.userChoice;
@@ -117,6 +119,7 @@ const App: React.FC = () => {
   };
 
   const handleGenerate = async () => {
+    playClickSound();
     if (!text.trim()) return;
     
     setIsLoading(true);
@@ -130,6 +133,7 @@ const App: React.FC = () => {
       
       const { base64Audio } = await generateSpeech(text, selectedVoice);
       setAudioBase64(base64Audio);
+      playSuccessSound(); // Play chime on success
       
       if (audioContextRef.current) {
         const buffer = await decodeAudioData(base64Audio, audioContextRef.current);
@@ -154,6 +158,7 @@ const App: React.FC = () => {
   };
 
   const handleDownload = (base64Data: string, voiceName: string) => {
+    playDownloadSound();
     if (!base64Data) return;
     
     const wavBlob = createWavBlob(base64Data);
@@ -204,6 +209,7 @@ const App: React.FC = () => {
   };
 
   const togglePlayback = () => {
+    playClickSound();
     if (isPlaying) {
       // Pause
       if (sourceRef.current && audioContextRef.current) {
@@ -225,6 +231,7 @@ const App: React.FC = () => {
   };
 
   const loadFromHistory = async (item: HistoryItem) => {
+    playClickSound();
     stopAudio();
     setText(item.text);
     setSelectedVoice(item.voice);
@@ -243,8 +250,19 @@ const App: React.FC = () => {
   };
 
   const deleteFromHistory = (id: string) => {
+    playDeleteSound();
     setHistory(prev => prev.filter(item => item.id !== id));
   };
+
+  const handleVoiceSelect = (id: VoiceName) => {
+    playClickSound();
+    setSelectedVoice(id);
+  }
+
+  const handleThemeToggle = () => {
+    playClickSound();
+    setIsDarkMode(!isDarkMode);
+  }
 
   useEffect(() => {
      if(!isPlaying) return;
@@ -279,7 +297,7 @@ const App: React.FC = () => {
           )}
 
           <button 
-            onClick={() => setIsDarkMode(!isDarkMode)}
+            onClick={handleThemeToggle}
             className="p-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
             title={isDarkMode ? "Светлая тема" : "Тёмная тема"}
           >
@@ -313,7 +331,7 @@ const App: React.FC = () => {
                 {VOICE_OPTIONS.map((voice) => (
                   <button
                     key={voice.id}
-                    onClick={() => setSelectedVoice(voice.id)}
+                    onClick={() => handleVoiceSelect(voice.id)}
                     className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left ${
                       selectedVoice === voice.id
                         ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-500 shadow-sm'
