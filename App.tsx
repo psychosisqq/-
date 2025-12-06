@@ -370,7 +370,7 @@ const App: React.FC = () => {
                 <textarea
                   id="text-input"
                   rows={5}
-                  className="block w-full rounded-xl border-slate-300 dark:border-slate-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-4 resize-none bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400"
+                  className="block w-full rounded-xl border-slate-300 dark:border-slate-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-4 resize-none bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 transition-colors"
                   placeholder="Например: Привет! Я твой новый голосовой помощник, и я люблю печеньки."
                   value={text}
                   onChange={(e) => setText(e.target.value)}
@@ -385,34 +385,39 @@ const App: React.FC = () => {
               </p>
             </div>
             
-             {/* Generate Button */}
-             <button
-              onClick={handleGenerate}
-              disabled={isLoading || !text.trim()}
-              className={`w-full flex items-center justify-center py-4 px-6 border border-transparent rounded-xl shadow-md text-base font-bold text-white transition-all transform active:scale-95 ${
-                isLoading || !text.trim()
-                  ? 'bg-indigo-300 dark:bg-indigo-800 cursor-not-allowed'
-                  : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg dark:bg-indigo-600 dark:hover:bg-indigo-500'
-              }`}
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Создаю магию...
-                </>
-              ) : (
-                <>
-                  <SparklesIcon className="h-5 w-5 mr-2" />
-                  Озвучить Текст
-                </>
-              )}
-            </button>
+             {/* Generate Button with Enhanced Loading State */}
+             <div className="relative">
+               {isLoading && (
+                 <div className="absolute -inset-1 bg-indigo-500 rounded-xl blur opacity-25 animate-pulse"></div>
+               )}
+               <button
+                onClick={handleGenerate}
+                disabled={isLoading || !text.trim()}
+                className={`relative w-full flex items-center justify-center py-4 px-6 border border-transparent rounded-xl shadow-md text-base font-bold text-white transition-all transform active:scale-95 ${
+                  isLoading || !text.trim()
+                    ? 'bg-indigo-400 dark:bg-indigo-800 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg dark:bg-indigo-600 dark:hover:bg-indigo-500'
+                }`}
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Создаю магию...
+                  </>
+                ) : (
+                  <>
+                    <SparklesIcon className="h-5 w-5 mr-2" />
+                    Озвучить Текст
+                  </>
+                )}
+              </button>
+            </div>
 
             {error && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-300 text-sm">
+              <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-300 text-sm animate-fade-in">
                 {error}
               </div>
             )}
@@ -425,10 +430,31 @@ const App: React.FC = () => {
               Плеер
             </h3>
             
-            <AudioVisualizer 
-              analyser={analyserRef.current} 
-              isPlaying={isPlaying} 
-            />
+            {/* Visualizer Container */}
+            <div className="relative">
+               <AudioVisualizer 
+                 analyser={analyserRef.current} 
+                 isPlaying={isPlaying} 
+               />
+               
+               {/* Animated Loading Overlay */}
+               {!audioBufferRef.current && isLoading && (
+                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-100/50 dark:bg-slate-800/50 rounded-xl backdrop-blur-sm z-10">
+                    <div className="flex gap-1.5 items-end h-8 mb-3">
+                         {[...Array(5)].map((_, i) => (
+                             <div 
+                               key={i} 
+                               className="w-1.5 bg-indigo-500 rounded-full animate-bounce" 
+                               style={{ height: '60%', animationDelay: `${i * 0.1}s` }}
+                             ></div>
+                         ))}
+                    </div>
+                    <div className="text-sm text-indigo-600 dark:text-indigo-300 font-semibold animate-pulse">
+                        Генерирую озвучку...
+                    </div>
+                 </div>
+               )}
+            </div>
 
             {/* Speed Control Slider */}
             <div className="w-full px-2">
@@ -495,11 +521,6 @@ const App: React.FC = () => {
             {!audioBufferRef.current && !isLoading && (
                 <div className="text-center text-sm text-slate-400 dark:text-slate-500 py-4">
                     Аудио пока нет. Напишите текст и нажмите "Озвучить".
-                </div>
-            )}
-             {!audioBufferRef.current && isLoading && (
-                <div className="text-center text-sm text-indigo-400 dark:text-indigo-300 py-4 animate-pulse">
-                    Нейросеть генерирует голос...
                 </div>
             )}
           </div>
