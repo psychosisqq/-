@@ -14,8 +14,8 @@ const getContext = (): AudioContext => {
 };
 
 /**
- * Plays a subtle, soft "pop" or bubble sound.
- * Much more pleasant than a harsh click.
+ * Standard UI Click.
+ * Short, crisp, high-pitched "tick".
  */
 export const playClickSound = () => {
   try {
@@ -26,68 +26,49 @@ export const playClickSound = () => {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
-    // Sine wave is softer
     osc.type = 'sine';
-    // Frequency sweep for a "droplet" sound
-    osc.frequency.setValueAtTime(800, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.1);
-
-    // Smooth envelope
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(600, ctx.currentTime);
+    
+    // Very short envelope
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
 
     osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.1);
-  } catch (e) {
-    // Ignore audio errors
-  }
+    osc.stop(ctx.currentTime + 0.05);
+  } catch (e) {}
 };
 
 /**
- * Plays a magical, airy arpeggio.
- * Used when generation completes successfully.
+ * Standard Success/Notification sound.
+ * A simple pleasant "Ding" (Rising tone).
  */
 export const playSuccessSound = () => {
   try {
     const ctx = getContext();
-    const now = ctx.currentTime;
-    const masterGain = ctx.createGain();
-    masterGain.connect(ctx.destination);
-    masterGain.gain.value = 0.05; // Keep it subtle
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
 
-    // E Major 7 chord (E, G#, B, D#) - sounds magical/dreamy
-    const notes = [659.25, 830.61, 987.77, 1244.51]; 
+    osc.connect(gain);
+    gain.connect(ctx.destination);
 
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const noteGain = ctx.createGain();
-      
-      osc.connect(noteGain);
-      noteGain.connect(masterGain);
-      
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      
-      // Stagger start times for arpeggio effect
-      const startTime = now + (i * 0.05);
-      const duration = 0.8;
+    osc.type = 'sine';
+    
+    // Simple 5th interval rise
+    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+    osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.1); // G5
 
-      noteGain.gain.setValueAtTime(0, startTime);
-      noteGain.gain.linearRampToValueAtTime(1, startTime + 0.1);
-      noteGain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      
-      osc.start(startTime);
-      osc.stop(startTime + duration + 0.1);
-    });
-  } catch (e) {
-    console.debug(e);
-  }
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } catch (e) {}
 };
 
 /**
- * Plays a gentle "slide up" sound.
- * Used for download actions.
+ * Standard Save/Download sound.
+ * Quick affirmative rising swipe.
  */
 export const playDownloadSound = () => {
   try {
@@ -98,23 +79,21 @@ export const playDownloadSound = () => {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
-    // Soft rise
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(300, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.2);
+    osc.frequency.setValueAtTime(400, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(800, ctx.currentTime + 0.15);
 
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.05);
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
 
     osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.25);
+    osc.stop(ctx.currentTime + 0.2);
   } catch (e) {}
 };
 
 /**
- * Plays a soft, low "thud".
- * Less aggressive than the previous sound.
+ * Standard Delete/Remove sound.
+ * Quick descending tone.
  */
 export const playDeleteSound = () => {
   try {
@@ -125,12 +104,12 @@ export const playDeleteSound = () => {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
-    osc.type = 'sine'; // Changed from square to sine for softness
-    osc.frequency.setValueAtTime(150, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.1);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(300, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.1);
 
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.1);
 
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.15);
