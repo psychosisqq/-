@@ -6,6 +6,16 @@ export interface TTSResult {
   base64Audio: string;
 }
 
+// Singleton instance to prevent re-initializing on every request
+let genAIInstance: GoogleGenAI | null = null;
+
+function getGenAIInstance(apiKey: string): GoogleGenAI {
+  if (!genAIInstance) {
+    genAIInstance = new GoogleGenAI({ apiKey });
+  }
+  return genAIInstance;
+}
+
 /**
  * Direct call to Gemini API (Client-side).
  * Used in DEV mode or as a fallback if the Proxy is unavailable (Preview mode).
@@ -18,7 +28,7 @@ async function generateSpeechDirectly(text: string, voice: VoiceName): Promise<T
     throw new Error("API Key not found. Please check your .env configuration.");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = getGenAIInstance(apiKey);
   const prompt = `Say the following text in Russian. Use a very funny, expressive, and energetic tone.\n\nText to speak: ${text}`;
 
   try {

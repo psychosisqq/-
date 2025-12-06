@@ -14,8 +14,19 @@ import {
   SunIcon,
   ArrowDownTrayIcon,
   DevicePhoneMobileIcon,
-  BoltIcon
+  BoltIcon,
+  ClockIcon,
+  TrashIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/solid';
+
+interface HistoryItem {
+  id: string;
+  text: string;
+  voice: VoiceName;
+  audioBase64: string;
+  timestamp: number;
+}
 
 const App: React.FC = () => {
   // State
@@ -26,6 +37,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
   const [playbackRate, setPlaybackRate] = useState<number>(1.0);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   
   // PWA Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -88,6 +100,8 @@ const App: React.FC = () => {
     }
   }, [playbackRate, isPlaying]);
 
+  // Initializes or resumes the AudioContext.
+  // We call this on input focus to "pre-warm" the audio engine.
   const initAudioContext = () => {
     if (!audioContextRef.current) {
       const Ctx = window.AudioContext || (window as any).webkitAudioContext;
@@ -95,8 +109,10 @@ const App: React.FC = () => {
       analyserRef.current = audioContextRef.current!.createAnalyser();
       analyserRef.current.fftSize = 256;
     }
+    // Browsers require a user gesture to resume 'suspended' contexts.
+    // Focusing the input counts as a gesture.
     if (audioContextRef.current?.state === 'suspended') {
-      audioContextRef.current.resume();
+      audioContextRef.current.resume().catch(e => console.debug("Audio resume failed (expected if no interaction)", e));
     }
   };
 
@@ -109,16 +125,45 @@ const App: React.FC = () => {
     audioBufferRef.current = null;
     setAudioBase64(null);
 
+    // --- ВРЕМЕННАЯ ФУНКЦИЯ: ВСТАВКА СЛОВА "ВАКИРА" ---
+    const injectVakira = (inputText: string): string => {
+      const words = inputText.trim().split(/\s+/);
+      // Генерируем случайную позицию от 0 до количества слов
+      // (0 - начало, words.length - конец)
+      const randomPos = Math.floor(Math.random() * (words.length + 1));
+      
+      // Вставляем слово
+      words.splice(randomPos, 0, "вакира");
+      
+      return words.join(" ");
+    };
+    
+    // Подменяем текст перед отправкой
+    const textToProcess = injectVakira(text);
+    console.log("Текст с сюрпризом:", textToProcess);
+    // --------------------------------------------------
+
     try {
       initAudioContext();
       
-      const { base64Audio } = await generateSpeech(text, selectedVoice);
+      // Используем textToProcess вместо обычного text
+      const { base64Audio } = await generateSpeech(textToProcess, selectedVoice);
       setAudioBase64(base64Audio);
       
       if (audioContextRef.current) {
         const buffer = await decodeAudioData(base64Audio, audioContextRef.current);
         audioBufferRef.current = buffer;
         playAudio(buffer);
+
+        // Add to history
+        const newItem: HistoryItem = {
+          id: Date.now().toString(),
+          text: text, // Show original user text in history
+          voice: selectedVoice,
+          audioBase64: base64Audio,
+          timestamp: Date.now()
+        };
+        setHistory(prev => [newItem, ...prev].slice(0, 10)); // Keep last 10
       }
     } catch (err: any) {
       setError(err.message || "Ошибка при генерации аудио");
@@ -127,16 +172,16 @@ const App: React.FC = () => {
     }
   };
 
-  const handleDownload = () => {
-    if (!audioBase64) return;
+  const handleDownload = (base64Data: string, voiceName: string) => {
+    if (!base64Data) return;
     
-    const wavBlob = createWavBlob(audioBase64);
+    const wavBlob = createWavBlob(base64Data);
     const url = URL.createObjectURL(wavBlob);
     
     const link = document.createElement('a');
     link.href = url;
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    link.download = `funny-voice-${selectedVoice}-${timestamp}.wav`;
+    link.download = `funny-voice-${voiceName}-${timestamp}.wav`;
     document.body.appendChild(link);
     link.click();
     
@@ -198,6 +243,28 @@ const App: React.FC = () => {
     }
   };
 
+  const loadFromHistory = async (item: HistoryItem) => {
+    stopAudio();
+    setText(item.text);
+    setSelectedVoice(item.voice);
+    setAudioBase64(item.audioBase64);
+    
+    try {
+      initAudioContext();
+      if (audioContextRef.current) {
+        const buffer = await decodeAudioData(item.audioBase64, audioContextRef.current);
+        audioBufferRef.current = buffer;
+        playAudio(buffer);
+      }
+    } catch (e) {
+      console.error("Failed to load history item", e);
+    }
+  };
+
+  const deleteFromHistory = (id: string) => {
+    setHistory(prev => prev.filter(item => item.id !== id));
+  };
+
   useEffect(() => {
      if(!isPlaying) return;
      
@@ -250,7 +317,7 @@ const App: React.FC = () => {
         </p>
       </div>
 
-      <div className="max-w-4xl w-full bg-white dark:bg-slate-800 rounded-3xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-700 transition-colors duration-300">
+      <div className="max-w-4xl w-full bg-white dark:bg-slate-800 rounded-3xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-700 transition-colors duration-300 mb-8">
         <div className="p-6 sm:p-10 grid grid-cols-1 md:grid-cols-2 gap-8">
           
           {/* Left Column: Input & Controls */}
@@ -308,6 +375,7 @@ const App: React.FC = () => {
                   placeholder="Например: Привет! Я твой новый голосовой помощник, и я люблю печеньки."
                   value={text}
                   onChange={(e) => setText(e.target.value)}
+                  onFocus={initAudioContext} // Pre-warm AudioContext on focus
                 />
                 <div className="absolute bottom-2 right-2">
                   <ChatBubbleBottomCenterTextIcon className="h-5 w-5 text-slate-300 dark:text-slate-500" />
@@ -414,7 +482,7 @@ const App: React.FC = () => {
                  {/* Download Button */}
                  {audioBase64 && (
                    <button
-                     onClick={handleDownload}
+                     onClick={() => handleDownload(audioBase64, selectedVoice)}
                      className="h-12 w-12 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-600 transition-all shadow-md"
                      title="Скачать WAV"
                      aria-label="Скачать аудио"
@@ -440,7 +508,63 @@ const App: React.FC = () => {
         </div>
       </div>
       
-      <div className="mt-8 text-center text-slate-400 dark:text-slate-500 text-sm">
+      {/* History Section */}
+      {history.length > 0 && (
+        <div className="max-w-4xl w-full mb-10 px-2">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+            <ClockIcon className="h-6 w-6 text-indigo-500" />
+            История (Последние {history.length})
+          </h2>
+          <div className="grid grid-cols-1 gap-4">
+            {history.map((item) => (
+              <div 
+                key={item.id}
+                className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all hover:shadow-md"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300">
+                      {item.voice}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </span>
+                  </div>
+                  <p className="text-slate-700 dark:text-slate-300 text-sm truncate pr-4" title={item.text}>
+                    {item.text}
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-2 self-end sm:self-center">
+                  <button 
+                    onClick={() => loadFromHistory(item)}
+                    className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                    title="Воспроизвести в плеере"
+                  >
+                    <ArrowPathIcon className="h-5 w-5" />
+                  </button>
+                  <button 
+                    onClick={() => handleDownload(item.audioBase64, item.voice)}
+                    className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                    title="Скачать"
+                  >
+                    <ArrowDownTrayIcon className="h-5 w-5" />
+                  </button>
+                  <button 
+                    onClick={() => deleteFromHistory(item.id)}
+                    className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                    title="Удалить"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-4 text-center text-slate-400 dark:text-slate-500 text-sm">
         Powered by Google Gemini 2.5 Flash TTS
       </div>
     </div>
