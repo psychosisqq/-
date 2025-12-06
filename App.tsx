@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { generateSpeech } from './services/geminiService';
 import { VoiceName, VOICE_OPTIONS } from './types';
@@ -12,7 +13,8 @@ import {
   MoonIcon,
   SunIcon,
   ArrowDownTrayIcon,
-  DevicePhoneMobileIcon
+  DevicePhoneMobileIcon,
+  BoltIcon
 } from '@heroicons/react/24/solid';
 
 const App: React.FC = () => {
@@ -23,6 +25,7 @@ const App: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
+  const [playbackRate, setPlaybackRate] = useState<number>(1.0);
   
   // PWA Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -50,9 +53,7 @@ const App: React.FC = () => {
   // Capture PWA install prompt
   useEffect(() => {
     const handler = (e: any) => {
-      // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      // Stash the event so it can be triggered later.
       setDeferredPrompt(e);
     };
 
@@ -65,11 +66,8 @@ const App: React.FC = () => {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
-    // Show the install prompt
     deferredPrompt.prompt();
-    // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-    // We've used the prompt, and can't use it again, throw it away
+    await deferredPrompt.userChoice;
     setDeferredPrompt(null);
   };
 
@@ -83,7 +81,13 @@ const App: React.FC = () => {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
-  // Initialize Audio Context on user interaction (to handle autoplay policies)
+  // Update playback rate dynamically if playing
+  useEffect(() => {
+    if (sourceRef.current && isPlaying) {
+      sourceRef.current.playbackRate.value = playbackRate;
+    }
+  }, [playbackRate, isPlaying]);
+
   const initAudioContext = () => {
     if (!audioContextRef.current) {
       const Ctx = window.AudioContext || (window as any).webkitAudioContext;
@@ -91,7 +95,6 @@ const App: React.FC = () => {
       analyserRef.current = audioContextRef.current!.createAnalyser();
       analyserRef.current.fftSize = 256;
     }
-    // Resume if suspended
     if (audioContextRef.current?.state === 'suspended') {
       audioContextRef.current.resume();
     }
@@ -102,15 +105,15 @@ const App: React.FC = () => {
     
     setIsLoading(true);
     setError(null);
-    stopAudio(); // Stop any current playback
-    audioBufferRef.current = null; // Reset buffer
+    stopAudio();
+    audioBufferRef.current = null;
     setAudioBase64(null);
 
     try {
       initAudioContext();
       
       const { base64Audio } = await generateSpeech(text, selectedVoice);
-      setAudioBase64(base64Audio); // Save for downloading
+      setAudioBase64(base64Audio);
       
       if (audioContextRef.current) {
         const buffer = await decodeAudioData(base64Audio, audioContextRef.current);
@@ -132,13 +135,11 @@ const App: React.FC = () => {
     
     const link = document.createElement('a');
     link.href = url;
-    // Filename: voice-timestamp.wav
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     link.download = `funny-voice-${selectedVoice}-${timestamp}.wav`;
     document.body.appendChild(link);
     link.click();
     
-    // Cleanup
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
@@ -146,26 +147,21 @@ const App: React.FC = () => {
   const playAudio = (buffer: AudioBuffer) => {
     if (!audioContextRef.current || !analyserRef.current) return;
 
-    // Disconnect old source if exists
     if (sourceRef.current) {
       sourceRef.current.disconnect();
     }
 
     const source = audioContextRef.current.createBufferSource();
     source.buffer = buffer;
+    source.playbackRate.value = playbackRate;
     source.connect(analyserRef.current);
     analyserRef.current.connect(audioContextRef.current.destination);
 
-    // Handle pause resume logic
-    const offset = pausedAtRef.current % buffer.duration;
+    const offset = pausedAtRef.current;
     
     source.start(0, offset);
-    startTimeRef.current = audioContextRef.current.currentTime - offset;
+    startTimeRef.current = audioContextRef.current.currentTime - (offset / playbackRate);
     
-    source.onended = () => {
-       // Only reset if we naturally finished, not if we stopped manually to pause
-    };
-
     sourceRef.current = source;
     setIsPlaying(true);
   };
@@ -174,9 +170,7 @@ const App: React.FC = () => {
     if (sourceRef.current) {
       try {
         sourceRef.current.stop();
-      } catch (e) {
-        // ignore if already stopped
-      }
+      } catch (e) {}
       sourceRef.current = null;
     }
     setIsPlaying(false);
@@ -187,13 +181,16 @@ const App: React.FC = () => {
     if (isPlaying) {
       // Pause
       if (sourceRef.current && audioContextRef.current) {
+        // Calculate paused position considering playback rate
+        const elapsed = audioContextRef.current.currentTime - startTimeRef.current;
+        pausedAtRef.current = elapsed * playbackRate;
+        
         sourceRef.current.stop();
-        pausedAtRef.current = audioContextRef.current.currentTime - startTimeRef.current;
         sourceRef.current = null;
         setIsPlaying(false);
       }
     } else {
-      // Resume or Play from start
+      // Resume
       if (audioBufferRef.current) {
         initAudioContext();
         playAudio(audioBufferRef.current);
@@ -201,13 +198,12 @@ const App: React.FC = () => {
     }
   };
 
-  // Monitor audio source for natural finish to update UI
   useEffect(() => {
      if(!isPlaying) return;
      
      const checkEnded = setInterval(() => {
          if (audioContextRef.current && startTimeRef.current && audioBufferRef.current) {
-             const elapsed = audioContextRef.current.currentTime - startTimeRef.current;
+             const elapsed = (audioContextRef.current.currentTime - startTimeRef.current) * playbackRate;
              if (elapsed >= audioBufferRef.current.duration) {
                  setIsPlaying(false);
                  pausedAtRef.current = 0;
@@ -215,8 +211,7 @@ const App: React.FC = () => {
          }
      }, 200);
      return () => clearInterval(checkEnded);
-  }, [isPlaying]);
-
+  }, [isPlaying, playbackRate]);
 
   return (
     <div className="min-h-screen flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
@@ -224,9 +219,7 @@ const App: React.FC = () => {
       {/* Header */}
       <div className="relative max-w-3xl w-full text-center mb-10">
         
-        {/* Top Right Controls */}
         <div className="absolute right-0 top-0 flex items-center gap-2">
-           {/* PWA Install Button */}
            {deferredPrompt && (
             <button 
               onClick={handleInstallClick}
@@ -237,7 +230,6 @@ const App: React.FC = () => {
             </button>
           )}
 
-          {/* Dark Mode Toggle */}
           <button 
             onClick={() => setIsDarkMode(!isDarkMode)}
             className="p-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
@@ -370,6 +362,33 @@ const App: React.FC = () => {
               analyser={analyserRef.current} 
               isPlaying={isPlaying} 
             />
+
+            {/* Speed Control Slider */}
+            <div className="w-full px-2">
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                  <BoltIcon className="h-4 w-4" />
+                  Скорость и Тон
+                </label>
+                <span className="text-xs font-mono bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">
+                  {playbackRate.toFixed(1)}x
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0.5"
+                max="2.0"
+                step="0.1"
+                value={playbackRate}
+                onChange={(e) => setPlaybackRate(parseFloat(e.target.value))}
+                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              />
+              <div className="flex justify-between text-[10px] text-slate-400 mt-1 font-medium uppercase tracking-wider">
+                <span>Монстр</span>
+                <span>Норма</span>
+                <span>Бурундук</span>
+              </div>
+            </div>
 
             <div className="flex flex-col items-center gap-4 mt-2">
                {/* Controls Row */}
