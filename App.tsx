@@ -125,29 +125,10 @@ const App: React.FC = () => {
     audioBufferRef.current = null;
     setAudioBase64(null);
 
-    // --- ВРЕМЕННАЯ ФУНКЦИЯ: ВСТАВКА СЛОВА "ВАКИРА" ---
-    const injectVakira = (inputText: string): string => {
-      const words = inputText.trim().split(/\s+/);
-      // Генерируем случайную позицию от 0 до количества слов
-      // (0 - начало, words.length - конец)
-      const randomPos = Math.floor(Math.random() * (words.length + 1));
-      
-      // Вставляем слово
-      words.splice(randomPos, 0, "вакира");
-      
-      return words.join(" ");
-    };
-    
-    // Подменяем текст перед отправкой
-    const textToProcess = injectVakira(text);
-    console.log("Текст с сюрпризом:", textToProcess);
-    // --------------------------------------------------
-
     try {
       initAudioContext();
       
-      // Используем textToProcess вместо обычного text
-      const { base64Audio } = await generateSpeech(textToProcess, selectedVoice);
+      const { base64Audio } = await generateSpeech(text, selectedVoice);
       setAudioBase64(base64Audio);
       
       if (audioContextRef.current) {
@@ -158,7 +139,7 @@ const App: React.FC = () => {
         // Add to history
         const newItem: HistoryItem = {
           id: Date.now().toString(),
-          text: text, // Show original user text in history
+          text: text,
           voice: selectedVoice,
           audioBase64: base64Audio,
           timestamp: Date.now()
