@@ -60,12 +60,55 @@ async function generateSpeechDirectly(text: string, voice: VoiceName): Promise<T
 }
 
 /**
+ * Rewrites user text to match the selected character's personality.
+ * Uses Gemini 3 Pro with Thinking budget for high creativity.
+ */
+export async function rewriteText(text: string, voiceName: string, voiceDescription: string): Promise<string> {
+   // @ts-ignore
+   const isDev = import.meta.env?.DEV ?? false;
+   
+   // For text rewriting, we can use direct client call safely as text models are less restricted usually,
+   // or simple proxy if needed. For simplicity in this demo, we use direct call since text generation
+   // is standard.
+   const apiKey = process.env.API_KEY;
+   if (!apiKey) throw new Error("API Key missing");
+   
+   const ai = getGenAIInstance(apiKey);
+   
+   const prompt = `
+     You are a creative scriptwriter. 
+     Your task is to rewrite the user's text in Russian to make it funnier, more expressive, and matching a specific character persona.
+     
+     Character Name: ${voiceName}
+     Character Description: ${voiceDescription}
+     
+     User Text: "${text}"
+     
+     Rules:
+     1. Keep the meaning but change the style.
+     2. Use emojis fitting the character.
+     3. Keep it under 300 characters.
+     4. Output ONLY the rewritten Russian text.
+   `;
+
+   try {
+     const response = await ai.models.generateContent({
+       model: "gemini-3-pro-preview", // Using the powerful thinking model
+       contents: prompt,
+       config: {
+         thinkingConfig: { thinkingBudget: 32768 }, // Max thinking for creativity
+       }
+     });
+     
+     return response.text?.trim() || text;
+   } catch (error) {
+     console.error("Rewrite failed", error);
+     return text; // Fallback to original text
+   }
+}
+
+/**
  * Generates speech from text using Gemini 2.5 Flash TTS.
- * 
- * LOGIC:
- * 1. Checks if we are in explicit DEV mode.
- * 2. Tries to use the Vercel Proxy (/api/speech) to avoid Geo-blocking.
- * 3. If the Proxy is missing (404) - e.g. in Preview/Studio - falls back to Direct API.
  */
 export async function generateSpeech(
   text: string, 
