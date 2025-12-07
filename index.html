@@ -1,24 +1,22 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#4f46e5" />
-    <meta name="description" content="Смешная озвучка текста с помощью нейросетей. Выбери голос и преврати текст в речь!" />
+    <meta name="theme-color" content="#09090b" />
+    <meta name="description" content="Профессиональная озвучка текста с помощью нейросетей." />
     
     <!-- Open Graph / Facebook / Telegram -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Смешная Озвучка (Gemini TTS)" />
-    <meta property="og:description" content="Преврати текст в смешную озвучку с помощью ИИ. Бесплатно и быстро!" />
+    <meta property="og:title" content="AI Voice Studio" />
+    <meta property="og:description" content="Генерация речи с помощью Gemini AI." />
     <meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/3659/3659784.png" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content="Смешная Озвучка" />
-    <meta property="twitter:description" content="Создавай веселые голосовые сообщения из текста." />
-    <meta property="twitter:image" content="https://cdn-icons-png.flaticon.com/512/3659/3659784.png" />
-
-    <title>Смешная Озвучка</title>
+    <meta property="twitter:title" content="AI Voice Studio" />
+    
+    <title>AI Voice Studio</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
@@ -31,43 +29,39 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Nunito', 'sans-serif'],
+              sans: ['Inter', 'system-ui', 'sans-serif'],
             },
+            colors: {
+              background: '#09090b', // Zinc 950
+              surface: '#18181b',    // Zinc 900
+              border: '#27272a',     // Zinc 800
+            }
           }
         }
       }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
       body {
-        font-family: 'Nunito', sans-serif;
-        /* Prevent pull-to-refresh on mobile which looks weird in standalone app mode */
+        font-family: 'Inter', sans-serif;
+        background-color: #09090b;
+        color: #e4e4e7;
         overscroll-behavior-y: none;
       }
-      /* Custom scrollbar for text area */
-      textarea::-webkit-scrollbar {
-        width: 8px;
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
       }
-      textarea::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
+      ::-webkit-scrollbar-track {
+        background: transparent;
       }
-      textarea::-webkit-scrollbar-thumb {
-        background: #cbd5e1; 
-        border-radius: 4px;
+      ::-webkit-scrollbar-thumb {
+        background: #27272a; 
+        border-radius: 3px;
       }
-      textarea::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8; 
-      }
-      /* Dark mode scrollbar */
-      .dark textarea::-webkit-scrollbar-track {
-        background: #334155;
-      }
-      .dark textarea::-webkit-scrollbar-thumb {
-        background: #475569;
-      }
-      .dark textarea::-webkit-scrollbar-thumb:hover {
-        background: #64748b;
+      ::-webkit-scrollbar-thumb:hover {
+        background: #3f3f46; 
       }
     </style>
   <script type="importmap">
@@ -84,19 +78,13 @@
 }
 </script>
 </head>
-  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-indigo-100 selection:text-indigo-700 dark:bg-slate-900 dark:text-slate-50 dark:selection:bg-indigo-900 dark:selection:text-indigo-100 transition-colors duration-300">
+  <body class="antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
-            .then(registration => {
-              // Minimal logging
-            })
-            .catch(registrationError => {
-              console.debug('SW registration skipped (expected in preview): ', registrationError);
-            });
+          navigator.serviceWorker.register('/service-worker.js').catch(() => {});
         });
       }
     </script>

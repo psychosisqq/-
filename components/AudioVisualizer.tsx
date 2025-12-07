@@ -25,7 +25,8 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ analyser, isPlaying }
 
     ctx.clearRect(0, 0, width, height);
 
-    // Styling
+    // Styling for Modern Dark SaaS
+    // Sharp bars, technical look
     const barWidth = (width / bufferLength) * 2.5;
     let barHeight;
     let x = 0;
@@ -33,29 +34,26 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ analyser, isPlaying }
     for (let i = 0; i < bufferLength; i++) {
       barHeight = (dataArray[i] / 255) * height;
 
-      // Gradient color based on height/intensity
+      // Clean Gradient: Indigo to Transparent
       const gradient = ctx.createLinearGradient(0, height, 0, height - barHeight);
-      gradient.addColorStop(0, '#6366f1'); // Indigo-500
-      gradient.addColorStop(1, '#a855f7'); // Purple-500
+      gradient.addColorStop(0, '#4f46e5'); // Indigo 600
+      gradient.addColorStop(1, '#818cf8'); // Indigo 400
 
       ctx.fillStyle = gradient;
       
-      // Rounded top bars
-      ctx.beginPath();
-      ctx.roundRect(x, height - barHeight, barWidth, barHeight, [4, 4, 0, 0]);
-      ctx.fill();
+      // Sharp rectangles, no border radius for technical feel
+      if (barHeight > 2) {
+          ctx.fillRect(x, height - barHeight, barWidth - 2, barHeight);
+      }
 
-      x += barWidth + 1;
+      x += barWidth;
       
-      // Optimize: don't draw potentially thousands of bars off-screen if buffer is huge
       if (x > width) break;
     }
 
     if (isPlaying) {
       requestRef.current = requestAnimationFrame(draw);
     } else {
-        // Draw one last frame or clear to flat line
-        // For visual appeal, we leave the last frame or draw flat
         if (requestRef.current) cancelAnimationFrame(requestRef.current);
     }
   };
@@ -76,8 +74,8 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ analyser, isPlaying }
     <canvas 
       ref={canvasRef} 
       width={600} 
-      height={150} 
-      className="w-full h-32 md:h-48 bg-slate-100 rounded-xl border border-slate-200 shadow-inner dark:bg-slate-800 dark:border-slate-700"
+      height={120} 
+      className="w-full h-full opacity-80 mix-blend-screen"
     />
   );
 };
