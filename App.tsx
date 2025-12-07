@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { generateSpeech, rewriteText } from './services/geminiService';
 import { VoiceName, VOICE_OPTIONS } from './types';
@@ -12,11 +13,9 @@ import {
   TrashIcon,
   ClipboardDocumentIcon,
   WrenchScrewdriverIcon,
-  BoltIcon,
-  StopIcon
+  InformationCircleIcon
 } from '@heroicons/react/24/solid';
 
-// Helper for initials
 const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').slice(0, 2);
 
 interface HistoryItem {
@@ -145,7 +144,7 @@ const App: React.FC = () => {
       try {
           initAudioContext();
           const voiceInfo = VOICE_OPTIONS.find(v => v.id === voice);
-          const previewText = voiceInfo ? `Привет, это ${voiceInfo.name}. Я готов к работе.` : "Проверка голоса.";
+          const previewText = voiceInfo ? `Проверка голоса ${voiceInfo.name}.` : "Проверка.";
           const { base64Audio } = await generateSpeech(previewText, voice);
           if (audioContextRef.current) {
               const buffer = await decodeAudioData(base64Audio, audioContextRef.current);
@@ -263,19 +262,13 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-400 font-sans selection:bg-indigo-500/20 selection:text-indigo-200 flex flex-col">
       
-      {/* Header - Minimal SaaS Style */}
+      {/* Header */}
       <header className="w-full border-b border-white/5 bg-[#09090b]/80 backdrop-blur-xl sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
               <div className="flex items-center gap-2">
                   <div className="text-white font-bold tracking-tight text-lg">AI Studio</div>
                   <div className="h-4 w-[1px] bg-zinc-800"></div>
-                  <div className="text-xs font-mono text-zinc-500">VOICE GEN v2.0</div>
-              </div>
-              <div className="flex items-center gap-4">
-                  <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono text-zinc-600">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    SYSTEM ONLINE
-                  </div>
+                  <div className="text-xs font-mono text-zinc-500">VOICE GEN v2.2</div>
               </div>
           </div>
       </header>
@@ -283,14 +276,13 @@ const App: React.FC = () => {
       {/* Main Grid */}
       <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* Left Panel: Configuration */}
+        {/* Left Panel */}
         <div className="lg:col-span-7 flex flex-col gap-6">
             
             {/* Voice Selector */}
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-1">
-                    <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Актеры озвучки</label>
-                    <span className="text-[10px] text-zinc-600">{VOICE_OPTIONS.length} доступно</span>
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Выбор голоса</label>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {VOICE_OPTIONS.map((voice) => {
@@ -305,7 +297,6 @@ const App: React.FC = () => {
                                     : 'bg-zinc-900/30 border-white/5 hover:bg-zinc-900 hover:border-zinc-700'
                                 }`}
                             >
-                                {/* Gradient Avatar */}
                                 <div className={`h-10 w-10 shrink-0 rounded-full bg-gradient-to-br ${voice.gradient} flex items-center justify-center text-white text-xs font-bold shadow-inner`}>
                                     {getInitials(voice.name)}
                                 </div>
@@ -315,7 +306,6 @@ const App: React.FC = () => {
                                         <h3 className={`text-sm font-medium truncate ${isSelected ? 'text-white' : 'text-zinc-300'}`}>
                                             {voice.name}
                                         </h3>
-                                        {/* Preview Button */}
                                         <button
                                             onClick={(e) => handleVoicePreview(e, voice.id)}
                                             className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded transition-all"
@@ -327,8 +317,8 @@ const App: React.FC = () => {
                                             }
                                         </button>
                                     </div>
-                                    <p className="text-[11px] text-zinc-500 uppercase tracking-wide mb-0.5">{voice.role}</p>
-                                    <p className="text-[11px] text-zinc-600 truncate">{voice.description}</p>
+                                    <p className="text-[10px] text-zinc-500 uppercase tracking-wide mb-0.5">{voice.role}</p>
+                                    <p className="text-[10px] text-zinc-600 line-clamp-2 leading-tight">{voice.description}</p>
                                 </div>
                                 
                                 {isSelected && (
@@ -364,7 +354,7 @@ const App: React.FC = () => {
                         onChange={(e) => setText(e.target.value)}
                         onFocus={initAudioContext}
                         maxLength={MAX_CHARS}
-                        placeholder="Напишите текст, который нужно озвучить..."
+                        placeholder="Введите текст для озвучки..."
                         className={`w-full h-full bg-zinc-900/30 text-zinc-200 rounded-lg border border-white/5 p-4 text-sm font-light leading-relaxed focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 resize-none transition-all placeholder:text-zinc-700 ${isRewriting ? 'opacity-50 blur-[1px]' : ''}`}
                     />
                     
@@ -376,10 +366,11 @@ const App: React.FC = () => {
                          <button
                             onClick={handleRewrite}
                             disabled={!text.trim() || isRewriting}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-white/5 bg-zinc-900/80 hover:bg-zinc-800 text-[10px] font-medium text-zinc-400 transition-all hover:text-white disabled:opacity-0 shadow-sm backdrop-blur-sm"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-white/5 bg-indigo-900/20 hover:bg-indigo-900/40 border-indigo-500/20 text-[10px] font-medium text-indigo-300 transition-all hover:text-indigo-200 disabled:opacity-0 shadow-sm backdrop-blur-sm"
+                            title="Сделать текст более естественным для выбранного голоса"
                          >
-                            {isRewriting ? <span className="animate-spin">⟳</span> : <WrenchScrewdriverIcon className="h-3 w-3 text-indigo-400" />}
-                            Улучшить текст (AI)
+                            {isRewriting ? <span className="animate-spin">⟳</span> : <WrenchScrewdriverIcon className="h-3 w-3" />}
+                            Адаптировать под голос (AI)
                          </button>
                     </div>
                 </div>
@@ -399,18 +390,18 @@ const App: React.FC = () => {
                     {isLoading ? (
                         <>
                             <div className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
-                            <span className="tracking-wide">ОБРАБОТКА...</span>
+                            <span className="tracking-wide">ГЕНЕРАЦИЯ...</span>
                         </>
                     ) : (
                         <>
                             <SparklesIcon className="h-4 w-4"/>
-                            <span>СГЕНЕРИРОВАТЬ АУДИО</span>
+                            <span>ОЗВУЧИТЬ</span>
                         </>
                     )}
                 </button>
                 {error && (
                     <div className="mt-3 text-center text-[10px] text-red-500 font-mono bg-red-500/5 py-2 rounded border border-red-500/10">
-                        ERROR: {error}
+                        ОШИБКА: {error}
                     </div>
                 )}
             </div>
@@ -424,12 +415,11 @@ const App: React.FC = () => {
                  <div className="flex items-center justify-between mb-6">
                     <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 flex items-center gap-2">
                         <span className={`w-1.5 h-1.5 rounded-full ${audioBase64 ? 'bg-indigo-500 shadow-[0_0_5px_rgba(99,102,241,1)]' : 'bg-zinc-700'}`}></span>
-                        Аудио Выход
+                        Плеер
                     </div>
                     {audioBase64 && (
                         <div className="flex gap-1">
                              <button onClick={() => handleDownload(audioBase64, selectedVoice, 'wav')} className="text-[9px] font-mono bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded border border-white/5 hover:border-zinc-600 transition-colors">.WAV</button>
-                             <button onClick={() => handleDownload(audioBase64, selectedVoice, 'json')} className="text-[9px] font-mono bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-1 rounded border border-white/5 hover:border-zinc-600 transition-colors">.JSON</button>
                         </div>
                     )}
                  </div>
@@ -439,7 +429,7 @@ const App: React.FC = () => {
                      <AudioVisualizer analyser={analyserRef.current} isPlaying={isPlaying} />
                      {!audioBase64 && (
                          <div className="absolute inset-0 flex items-center justify-center text-zinc-700 text-[10px] font-mono uppercase tracking-wider">
-                             [NO SIGNAL]
+                             [НЕТ АУДИО]
                          </div>
                      )}
                  </div>
@@ -455,7 +445,7 @@ const App: React.FC = () => {
 
                      <div className="flex-1">
                         <div className="flex justify-between text-[9px] text-zinc-500 font-mono mb-1">
-                            <span>SPEED</span>
+                            <span>СКОРОСТЬ</span>
                             <span>{playbackRate.toFixed(1)}x</span>
                         </div>
                         <input
@@ -474,13 +464,13 @@ const App: React.FC = () => {
             {/* History Feed */}
             <div className="flex-1 flex flex-col min-h-[200px] border-t border-white/5 pt-6 lg:border-t-0 lg:pt-0">
                 <div className="flex items-center justify-between mb-4 px-1">
-                    <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Последние записи</label>
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">История</label>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto space-y-2 pr-1">
                     {history.length === 0 ? (
                         <div className="text-center py-10 text-[10px] text-zinc-700 font-mono">
-                            // ИСТОРИЯ ПУСТА
+                            // ПУСТО
                         </div>
                     ) : (
                         history.map((item) => {
@@ -497,7 +487,7 @@ const App: React.FC = () => {
                                     <div className="flex-1 min-w-0">
                                         <p className="text-xs text-zinc-300 truncate font-light">{item.text}</p>
                                         <p className="text-[9px] text-zinc-600 mt-0.5 font-mono">
-                                            {voiceInfo?.name} • {new Date(item.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                                            {voiceInfo?.name}
                                         </p>
                                     </div>
                                     <button

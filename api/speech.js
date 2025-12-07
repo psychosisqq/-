@@ -2,21 +2,10 @@
 import { GoogleGenAI } from "@google/genai";
 
 export const config = {
-  maxDuration: 60, // Увеличиваем время на обработку до 60 секунд
+  maxDuration: 60,
 };
 
-// Character-specific prompts for the proxy
-const VOICE_PROMPTS = {
-  'Puck': 'Say the following in Russian. You are SpongeBob SquarePants. Tone: High-pitched, ecstatic, very fast, laughing frequently (Ah-ha-ha!).',
-  'Fenrir': 'Say the following in Russian. You are Batman. Tone: Very deep, gravelly, slow, serious, whispering intensity.',
-  'Zephyr': 'Say the following in Russian. You are Deadpool. Tone: Sarcastic, edgy, playful, varying pitch, breaking the fourth wall.',
-  'Charon': 'Say the following in Russian. You are Rick Sanchez. Tone: Raspy, manic, stuttering, belching, condescending, scientific.',
-  'Kore': 'Say the following in Russian. You are a sweet Anime Girl. Tone: Very high-pitched, breathy, cute, uwu style, excited.',
-};
-
-// Используем стандартный Node.js обработчик (req, res)
 export default async function handler(req, res) {
-  // Настройка CORS (чтобы браузер не ругался)
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -25,19 +14,16 @@ export default async function handler(req, res) {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
 
-  // Если это предварительный запрос (OPTIONS) - просто отвечаем ОК
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  // Разрешаем только POST запросы
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // В Node.js (Vercel) req.body уже распарсен, если заголовок application/json
     const { text, voice } = req.body;
 
     if (!process.env.API_KEY) {
@@ -47,13 +33,13 @@ export default async function handler(req, res) {
 
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    // Выбираем стиль в зависимости от голоса
-    const styleInstruction = VOICE_PROMPTS[voice] || 'Say the following text in Russian. Use a very funny, expressive, and energetic tone.';
-    const prompt = `${styleInstruction}\n\nText to speak: "${text}"`;
-
+    // ВАЖНО: Мы отправляем только текст. Модель TTS не понимает инструкции "Act like...".
+    // Она просто читает то, что ей дали.
+    // Характер персонажа достигается выбором подходящего голоса (voice) и стилем самого текста.
+    
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: prompt }] }],
+      contents: [{ parts: [{ text: text }] }],
       config: {
         responseModalities: ["AUDIO"],
         speechConfig: {
@@ -71,7 +57,6 @@ export default async function handler(req, res) {
       throw new Error("No audio returned from Gemini");
     }
 
-    // Возвращаем аудио клиенту
     return res.status(200).json({ base64Audio: audioPart.inlineData.data });
 
   } catch (error) {

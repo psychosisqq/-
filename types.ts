@@ -13,47 +13,47 @@ export interface VoiceOption {
   role: string;
   description: string;
   gender: 'Male' | 'Female';
-  gradient: string; // CSS class for avatar gradient
+  gradient: string; 
 }
 
 export const VOICE_OPTIONS: VoiceOption[] = [
   { 
     id: VoiceName.Puck, 
-    name: 'Спанч Боб', 
-    role: 'Квадратные Штаны',
-    description: 'Звонкий, гиперактивный, постоянный смех (А-ха-ха!).', 
+    name: 'Puck', 
+    role: 'Игривый',
+    description: 'Энергичный, слегка высокий тембр. Хорошо подходит для эмоциональных текстов.', 
     gender: 'Male',
-    gradient: 'from-yellow-400 to-orange-500'
+    gradient: 'from-indigo-400 to-blue-500'
   },
   { 
     id: VoiceName.Fenrir, 
-    name: 'Бэтмен', 
-    role: 'Темный Рыцарь',
-    description: 'Глубокий, хриплый бас, шепот, пафос и мрак.', 
+    name: 'Fenrir', 
+    role: 'Глубокий',
+    description: 'Самый низкий и мощный бас. Звучит серьезно и авторитетно.', 
     gender: 'Male',
-    gradient: 'from-zinc-900 to-black'
+    gradient: 'from-slate-700 to-slate-900'
   },
   { 
     id: VoiceName.Zephyr, 
-    name: 'Дэдпул', 
-    role: 'Болтливый Наемник',
-    description: 'Дерзкий, ломает четвертую стену, шутит нон-стоп.', 
+    name: 'Zephyr', 
+    role: 'Спокойный',
+    description: 'Сбалансированный мужской голос. Идеален для чтения новостей и рассказов.', 
     gender: 'Male',
-    gradient: 'from-red-600 to-red-900'
+    gradient: 'from-emerald-500 to-teal-600'
   },
   { 
     id: VoiceName.Charon, 
-    name: 'Рик Санчез', 
-    role: 'Безумный Ученый',
-    description: 'Саркастичный, рыгает, заикается, гениальный дед.', 
+    name: 'Charon', 
+    role: 'Уверенный',
+    description: 'Насыщенный тембр, подходящий для подкастов и профессиональной озвучки.', 
     gender: 'Male',
-    gradient: 'from-emerald-400 to-cyan-600'
+    gradient: 'from-violet-500 to-purple-600'
   },
   { 
     id: VoiceName.Kore, 
-    name: 'Аниме Тян', 
-    role: 'Waifu Mode',
-    description: 'Милый, высокий голос, "Уву", очень эмоциональная.', 
+    name: 'Kore', 
+    role: 'Женский',
+    description: 'Мягкий и естественный женский голос. Звучит тепло и расслабляюще.', 
     gender: 'Female',
     gradient: 'from-pink-400 to-rose-400'
   },
