@@ -5,6 +5,15 @@ export const config = {
   maxDuration: 60, // Увеличиваем время на обработку до 60 секунд
 };
 
+// Character-specific prompts for the proxy
+const VOICE_PROMPTS = {
+  'Puck': 'Say the following in Russian. You are SpongeBob SquarePants. Tone: High-pitched, ecstatic, very fast, laughing frequently (Ah-ha-ha!).',
+  'Fenrir': 'Say the following in Russian. You are Batman. Tone: Very deep, gravelly, slow, serious, whispering intensity.',
+  'Zephyr': 'Say the following in Russian. You are Deadpool. Tone: Sarcastic, edgy, playful, varying pitch, breaking the fourth wall.',
+  'Charon': 'Say the following in Russian. You are Rick Sanchez. Tone: Raspy, manic, stuttering, belching, condescending, scientific.',
+  'Kore': 'Say the following in Russian. You are a sweet Anime Girl. Tone: Very high-pitched, breathy, cute, uwu style, excited.',
+};
+
 // Используем стандартный Node.js обработчик (req, res)
 export default async function handler(req, res) {
   // Настройка CORS (чтобы браузер не ругался)
@@ -38,8 +47,9 @@ export default async function handler(req, res) {
 
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    // Промпт для генерации
-    const prompt = `Say the following text in Russian. Use a very funny, expressive, and energetic tone.\n\nText to speak: ${text}`;
+    // Выбираем стиль в зависимости от голоса
+    const styleInstruction = VOICE_PROMPTS[voice] || 'Say the following text in Russian. Use a very funny, expressive, and energetic tone.';
+    const prompt = `${styleInstruction}\n\nText to speak: "${text}"`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",

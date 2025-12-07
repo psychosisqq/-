@@ -16,6 +16,15 @@ function getGenAIInstance(apiKey: string): GoogleGenAI {
   return genAIInstance;
 }
 
+// Specific prompts to force Gemini TTS to adopt the character's prosody
+const VOICE_PROMPTS: Record<string, string> = {
+  [VoiceName.Puck]: 'Say the following in Russian. You are SpongeBob SquarePants. Tone: High-pitched, ecstatic, very fast, laughing frequently (Ah-ha-ha!).',
+  [VoiceName.Fenrir]: 'Say the following in Russian. You are Batman. Tone: Very deep, gravelly, slow, serious, whispering intensity.',
+  [VoiceName.Zephyr]: 'Say the following in Russian. You are Deadpool. Tone: Sarcastic, edgy, playful, varying pitch, breaking the fourth wall.',
+  [VoiceName.Charon]: 'Say the following in Russian. You are Rick Sanchez. Tone: Raspy, manic, stuttering, belching, condescending, scientific.',
+  [VoiceName.Kore]: 'Say the following in Russian. You are a sweet Anime Girl. Tone: Very high-pitched, breathy, cute, uwu style, excited.',
+};
+
 /**
  * Direct call to Gemini API (Client-side).
  * Used in DEV mode or as a fallback if the Proxy is unavailable (Preview mode).
@@ -29,7 +38,10 @@ async function generateSpeechDirectly(text: string, voice: VoiceName): Promise<T
   }
 
   const ai = getGenAIInstance(apiKey);
-  const prompt = `Say the following text in Russian. Use a very funny, expressive, and energetic tone.\n\nText to speak: ${text}`;
+  
+  // Construct a prompt that forces the specific character persona
+  const styleInstruction = VOICE_PROMPTS[voice] || 'Say the following text in Russian. Use a very funny, expressive, and energetic tone.';
+  const prompt = `${styleInstruction}\n\nText to speak: "${text}"`;
 
   try {
     const response = await ai.models.generateContent({
@@ -165,8 +177,7 @@ function handleError(error: any) {
      throw new Error("Временная ошибка сервера Gemini (500). Попробуйте чуть позже или выберите другой голос.");
   }
   
-  // Улучшенная обработка ошибок доступа по региону (403)
   if (msg.includes("403") || msg.includes("Location") || msg.includes("User location") || msg.includes("not supported")) {
-     throw new Error("Доступ ограничен из вашего региона (ошибка 403). Попробуйте включить VPN или используйте версию сайта на Vercel (там работает встроенный прокси).");
+     throw new Error("Доступ ограничен из вашего региона (ошибка 403). Попробуйте включить VPN или используйте версию сайта на Vercel.");
   }
 }

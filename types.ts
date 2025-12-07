@@ -20,16 +20,16 @@ export const VOICE_OPTIONS: VoiceOption[] = [
   { 
     id: VoiceName.Puck, 
     name: 'Спанч Боб', 
-    role: 'Веселый Повар',
-    description: 'Звонкий, гиперактивный, с фирменным смехом.', 
+    role: 'Квадратные Штаны',
+    description: 'Звонкий, гиперактивный, постоянный смех (А-ха-ха!).', 
     gender: 'Male',
     gradient: 'from-yellow-400 to-orange-500'
   },
   { 
     id: VoiceName.Fenrir, 
-    name: 'Темный Рыцарь', 
-    role: 'Герой Готэма',
-    description: 'Максимально низкий бас, пафос, справедливость.', 
+    name: 'Бэтмен', 
+    role: 'Темный Рыцарь',
+    description: 'Глубокий, хриплый бас, шепот, пафос и мрак.', 
     gender: 'Male',
     gradient: 'from-zinc-900 to-black'
   },
@@ -37,23 +37,23 @@ export const VOICE_OPTIONS: VoiceOption[] = [
     id: VoiceName.Zephyr, 
     name: 'Дэдпул', 
     role: 'Болтливый Наемник',
-    description: 'Дерзкий, ломает четвертую стену, шутит.', 
+    description: 'Дерзкий, ломает четвертую стену, шутит нон-стоп.', 
     gender: 'Male',
     gradient: 'from-red-600 to-red-900'
   },
   { 
     id: VoiceName.Charon, 
-    name: 'Безумный Дед', 
-    role: 'Гениальный Ученый',
-    description: 'Хриплый, саркастичный, рыгает в разговоре.', 
+    name: 'Рик Санчез', 
+    role: 'Безумный Ученый',
+    description: 'Саркастичный, рыгает, заикается, гениальный дед.', 
     gender: 'Male',
     gradient: 'from-emerald-400 to-cyan-600'
   },
   { 
     id: VoiceName.Kore, 
-    name: 'Нейро-Тян', 
-    role: 'Аниме Вайфу',
-    description: 'Милый, нежный, успокаивающий голос.', 
+    name: 'Аниме Тян', 
+    role: 'Waifu Mode',
+    description: 'Милый, высокий голос, "Уву", очень эмоциональная.', 
     gender: 'Female',
     gradient: 'from-pink-400 to-rose-400'
   },
