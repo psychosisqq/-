@@ -1,3 +1,4 @@
+
 export enum VoiceName {
   Puck = 'Puck',
   Charon = 'Charon',
@@ -18,42 +19,42 @@ export interface VoiceOption {
 export const VOICE_OPTIONS: VoiceOption[] = [
   { 
     id: VoiceName.Puck, 
-    name: 'Макс Ветров', 
-    role: 'Стример / Блогер',
-    description: 'Энергичный, быстрый, с ноткой хайпа.', 
+    name: 'Спанч Боб', 
+    role: 'Веселый Повар',
+    description: 'Звонкий, гиперактивный, с фирменным смехом.', 
     gender: 'Male',
-    gradient: 'from-orange-500 to-yellow-500'
+    gradient: 'from-yellow-400 to-orange-500'
   },
   { 
     id: VoiceName.Fenrir, 
-    name: 'Борис "Скала"', 
-    role: 'Начальник охраны',
-    description: 'Глубокий бас, уверенный, угрожающий.', 
+    name: 'Темный Рыцарь', 
+    role: 'Герой Готэма',
+    description: 'Максимально низкий бас, пафос, справедливость.', 
     gender: 'Male',
-    gradient: 'from-slate-900 to-slate-700'
-  },
-  { 
-    id: VoiceName.Kore, 
-    name: 'Елена Тихая', 
-    role: 'Психолог / ASMR',
-    description: 'Мягкий, успокаивающий, доверительный.', 
-    gender: 'Female',
-    gradient: 'from-rose-400 to-pink-600'
+    gradient: 'from-zinc-900 to-black'
   },
   { 
     id: VoiceName.Zephyr, 
-    name: 'Артур Пирожков', 
-    role: 'Шоумен',
-    description: 'Харизматичный, поставленный голос.', 
+    name: 'Дэдпул', 
+    role: 'Болтливый Наемник',
+    description: 'Дерзкий, ломает четвертую стену, шутит.', 
     gender: 'Male',
-    gradient: 'from-blue-500 to-cyan-400'
+    gradient: 'from-red-600 to-red-900'
   },
   { 
     id: VoiceName.Charon, 
-    name: 'Профессор Громов', 
-    role: 'Лектор',
-    description: 'Низкий, хриплый, авторитетный.', 
+    name: 'Безумный Дед', 
+    role: 'Гениальный Ученый',
+    description: 'Хриплый, саркастичный, рыгает в разговоре.', 
     gender: 'Male',
-    gradient: 'from-emerald-600 to-teal-900'
+    gradient: 'from-emerald-400 to-cyan-600'
+  },
+  { 
+    id: VoiceName.Kore, 
+    name: 'Нейро-Тян', 
+    role: 'Аниме Вайфу',
+    description: 'Милый, нежный, успокаивающий голос.', 
+    gender: 'Female',
+    gradient: 'from-pink-400 to-rose-400'
   },
 ];

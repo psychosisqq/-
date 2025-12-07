@@ -67,28 +67,28 @@ export async function rewriteText(text: string, voiceName: string, voiceDescript
    // @ts-ignore
    const isDev = import.meta.env?.DEV ?? false;
    
-   // For text rewriting, we can use direct client call safely as text models are less restricted usually,
-   // or simple proxy if needed. For simplicity in this demo, we use direct call since text generation
-   // is standard.
    const apiKey = process.env.API_KEY;
    if (!apiKey) throw new Error("API Key missing");
    
    const ai = getGenAIInstance(apiKey);
    
    const prompt = `
-     You are a creative scriptwriter. 
-     Your task is to rewrite the user's text in Russian to make it funnier, more expressive, and matching a specific character persona.
+     You are a professional scriptwriter and parodist.
+     Your task is to rewrite the user's text in Russian to sound EXACTLY like a specific pop-culture character.
      
      Character Name: ${voiceName}
      Character Description: ${voiceDescription}
      
      User Text: "${text}"
      
-     Rules:
-     1. Keep the meaning but change the style.
-     2. Use emojis fitting the character.
-     3. Keep it under 300 characters.
-     4. Output ONLY the rewritten Russian text.
+     Instructions:
+     1. Adopt the character's vocabulary, catchphrases, and mannerisms.
+     2. If it's SpongeBob, add enthusiastic laughing (А-ха-ха!) and nautical terms.
+     3. If it's Batman/Dark Knight, make it gritty, dark, and overly dramatic.
+     4. If it's Deadpool, break the fourth wall, be sarcastic and edgy.
+     5. If it's Rick/Mad Scientist, stutter slightly, maybe add a burp (*рыг*), and sound superior.
+     6. Keep the core meaning of the user's text, but completely change the style.
+     7. Output ONLY the rewritten Russian text.
    `;
 
    try {
